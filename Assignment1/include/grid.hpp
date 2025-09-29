@@ -2,6 +2,7 @@
 
 #pragma once
 #include "asteroid.hpp"
+#include "game_camera.hpp"
 #include <vector>
 #include <raylib.h>
 
@@ -19,7 +20,7 @@ public:
     
     std::vector<Asteroid> getVisibleAsteroids(const Rectangle& frustum) const;
     
-    void renderDebug() const;
+    void renderDebug(const GameCamera& camera) const;
     
 private:
     int m_width = 0;

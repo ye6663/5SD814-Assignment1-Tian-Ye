@@ -1,6 +1,7 @@
 // grid.cpp
 
 #include "grid.hpp"
+#include "game_camera.hpp"
 #include "math_utils.hpp"
 #include <raylib.h>
 #include <iostream>
@@ -86,15 +87,16 @@ void Grid::updateAsteroids()
     }
 }
 
-std::vector<Asteroid> Grid::getVisibleAsteroids(const Rectangle& frustum2) const
+std::vector<Asteroid> Grid::getVisibleAsteroids(const Rectangle& frustum) const
 {
     std::vector<Asteroid> result;
 
-    int startX = 0;
-    int endX = 9;
+    // 计算视锥体覆盖的网格范围
+    int startX = std::max(0, static_cast<int>(frustum.x) / m_cellWidth);
+    int endX = std::min(m_width - 1, static_cast<int>(frustum.x + frustum.width) / m_cellWidth);
 
-    int startY = 0;
-    int endY = 9;
+    int startY = std::max(0, static_cast<int>(frustum.y) / m_cellHeight);
+    int endY = std::min(m_height - 1, static_cast<int>(frustum.y + frustum.height) / m_cellHeight);
 
     // 遍历可见的网格单元
     for (int y = startY; y <= endY; y++)
@@ -104,6 +106,7 @@ std::vector<Asteroid> Grid::getVisibleAsteroids(const Rectangle& frustum2) const
             int index = y * m_width + x;
             const auto& cell = m_cells[index];
 
+            // 检查每个小行星是否在视锥体内
             for (const auto& asteroid : cell.asteroids)
             {
                 Rectangle asteroidRect = {
@@ -113,7 +116,10 @@ std::vector<Asteroid> Grid::getVisibleAsteroids(const Rectangle& frustum2) const
                     asteroid.size.y
                 };
 
-                result.push_back(asteroid);
+                if (CheckCollisionRecs(asteroidRect, frustum))
+                {
+                    result.push_back(asteroid);
+                }
             }
         }
     }
@@ -121,9 +127,26 @@ std::vector<Asteroid> Grid::getVisibleAsteroids(const Rectangle& frustum2) const
     return result;
 }
 
-void Grid::renderDebug() const
+void Grid::renderDebug(const GameCamera& camera) const
 {
-     // 绘制小地图
+    Rectangle frustum = camera.getFrustum();
+
+    // 绘制网格线
+    for (int x = 0; x <= m_width; x++)
+    {
+        int lineX = x * m_cellWidth;
+        Color color = (lineX >= frustum.x && lineX <= frustum.x + frustum.width) ? GREEN : GRAY;
+        DrawLine(lineX, 0, lineX, m_height * m_cellHeight, color);
+    }
+
+    for (int y = 0; y <= m_height; y++)
+    {
+        int lineY = y * m_cellHeight;
+        Color color = (lineY >= frustum.y && lineY <= frustum.y + frustum.height) ? GREEN : GRAY;
+        DrawLine(0, lineY, m_width * m_cellWidth, lineY, color);
+    }
+
+    // 绘制小地图
     int miniMapSize = 200;
     int miniMapX = m_width - miniMapSize - 10;
     int miniMapY = 10;
@@ -146,6 +169,15 @@ void Grid::renderDebug() const
         int lineY = miniMapY + (int)(y * m_cellHeight * scale);
         DrawLine(miniMapX, lineY, miniMapX + miniMapSize, lineY, DARKGRAY);
     }
+
+    // 绘制视锥体在小地图上
+    Rectangle miniFrustum = {
+        miniMapX + frustum.x * scale,
+        miniMapY + frustum.y * scale,
+        frustum.width * scale,
+        frustum.height * scale
+    };
+    DrawRectangleLinesEx(miniFrustum, 1, GREEN);
 }
 
 void Grid::worldToGrid(const Vector2& position, int& gridX, int& gridY) const

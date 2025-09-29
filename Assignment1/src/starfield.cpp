@@ -30,24 +30,32 @@ void Starfield::initialize(int screenWidth, int screenHeight)
     }
 }
 
-void Starfield::addRenderCommands(std::vector<RenderCommand>& commands)
+void Starfield::addRenderCommands(std::vector<RenderCommand>& commands, const GameCamera& camera)
 {
+    Rectangle frustum = camera.getFrustum();
+    Vector2 cameraPos = camera.getPosition();
+
     for (const auto& star : m_stars)
     {
         // 应用视差效果
         Vector2 renderPos = {
-            star.position.x,
-            star.position.y
+            star.position.x - cameraPos.x * star.parallaxFactor,
+            star.position.y - cameraPos.y * star.parallaxFactor
         };
 
-        RenderCommand cmd;
-        cmd.type = RenderCommandType::Star;
-        cmd.position = renderPos;
-        cmd.size = { star.size, star.size };
-        cmd.rotation = 0;
-        cmd.color = star.color;
-        cmd.layer = 0; // 星空在最底层
+        // 检查星星是否在视锥体内
+        if (renderPos.x >= frustum.x && renderPos.x <= frustum.x + frustum.width &&
+            renderPos.y >= frustum.y && renderPos.y <= frustum.y + frustum.height)
+        {
+            RenderCommand cmd;
+            cmd.type = RenderCommandType::Star;
+            cmd.position = renderPos;
+            cmd.size = { star.size, star.size };
+            cmd.rotation = 0;
+            cmd.color = star.color;
+            cmd.layer = 0; // 星空在最底层
 
-        commands.push_back(cmd);
+            commands.push_back(cmd);
+        }
     }
 }

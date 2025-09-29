@@ -1,12 +1,13 @@
 #pragma once
 #include "render_command.hpp"
+#include "game_camera.hpp"
 #include <vector>
 
 class Starfield
 {
 public:
     void initialize(int screenWidth, int screenHeight);
-    void addRenderCommands(std::vector<RenderCommand>& commands);
+    void addRenderCommands(std::vector<RenderCommand>& commands, const GameCamera& camera);
     
 private:
     static const int STAR_COUNT = 1000;

@@ -1,5 +1,6 @@
 #pragma once
-
+#include "game_camera.hpp"
+#include "player.hpp"
 #include "grid.hpp"
 #include "starfield.hpp"
 #include "render_command.hpp"
@@ -17,6 +18,8 @@ private:
     int m_width = 1920;
     int m_height = 1080;
     
+    GameCamera m_camera;
+    Player m_player;
     Grid m_grid;
     Starfield m_starfield;
     
