@@ -6,11 +6,13 @@
 int main(int argc, char** argv)
 {
     // 设置窗口大小为1280x720
-    InitWindow(1280, 720, "Asteroid Field Renderer");
+    int width = 1280;
+    int height = 720;
+    InitWindow(width, height, "Asteroid Field Renderer");
     SetTargetFPS(60);
 
     Application app;
-    if (!app.initialize())
+    if (!app.initialize(width, height))
     {
         CloseWindow();
         return -1;

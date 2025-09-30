@@ -9,14 +9,14 @@
 class Application
 {
 public:
-    bool initialize();
+    bool initialize(int width, int height);
     void shutdown();
     void update();
     void render();
     
 private:
     int m_width = 1920;
-    int m_height = 1080;
+    int m_height = 1082;
     
     GameCamera m_camera;
     Player m_player;

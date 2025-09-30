@@ -6,8 +6,11 @@
 #include <iostream>
 #include <algorithm>
 
-bool Application::initialize()
+bool Application::initialize(int width, int height)
 {
+    this->m_width = width;
+    this->m_height = height;
+
     // 初始化网格世界 (10x10区域，每个1000x1000像素)
     m_grid.initialize(10, 10, 1000, 1000);
 
@@ -109,8 +112,8 @@ void Application::collectRenderCommands()
     playerCmd.type = RenderCommandType::Player;
     playerCmd.position = m_player.getPosition();
     playerCmd.rotation = m_player.getRotation();
-    playerCmd.size = { 20, 20 };
-    playerCmd.color = WHITE;
+    playerCmd.size = { 30, 30 };
+    playerCmd.color = RED;
     playerCmd.layer = 10; // 最高层
 
     m_renderCommands.push_back(playerCmd);
@@ -162,7 +165,7 @@ void Application::render()
                 cmd.position.y + sinf(cmd.rotation - 2.5f) * cmd.size.y * 0.6f
             };
 
-            DrawTriangle(front, left, right, cmd.color);
+            DrawTriangle(front, right, left, cmd.color);
             break;
         }
     }
