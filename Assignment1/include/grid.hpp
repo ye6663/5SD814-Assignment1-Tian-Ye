@@ -14,7 +14,7 @@ struct GridCell
 class Grid
 {
 public:
-    void initialize(int width, int height, int cellWidth, int cellHeight);
+    void initialize(int width, int height, int cellWidth, int cellHeight, int screen_width, int screen_height);
     void generateAsteroids(int count);
     void updateAsteroids();
     
@@ -27,12 +27,14 @@ private:
     int m_height = 0;
     int m_cellWidth = 0;
     int m_cellHeight = 0;
+    int m_screen_width;
+    int m_screen_height;
     
     std::vector<GridCell> m_cells;
     
-    // 将世界坐标转换为网格坐标
+    // Convert world coordinates to grid coordinates
     void worldToGrid(const Vector2& position, int& gridX, int& gridY) const;
     
-    // 检查网格单元是否在视锥体内
+    // Check if the grid cells are inside the cone of sight
     bool isCellVisible(int gridX, int gridY, const Rectangle& frustum) const;
 };

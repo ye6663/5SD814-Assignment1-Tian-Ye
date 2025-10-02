@@ -6,12 +6,14 @@
 #include <raylib.h>
 #include <iostream>
 
-void Grid::initialize(int width, int height, int cellWidth, int cellHeight)
+void Grid::initialize(int width, int height, int cellWidth, int cellHeight, int screen_width, int screen_height)
 {
     m_width = width;
     m_height = height;
     m_cellWidth = cellWidth;
     m_cellHeight = cellHeight;
+    m_screen_width = screen_width;
+    m_screen_height = screen_height;
 
     m_cells.resize(width * height);
 
@@ -25,44 +27,44 @@ void Grid::generateAsteroids(int count)
     {
         Asteroid asteroid;
 
-        // 随机位置在世界范围内
+        // Random position within world bounds
         Vector2 position = {
             (float)MathUtils::random(0, m_width * m_cellWidth),
             (float)MathUtils::random(0, m_height * m_cellHeight)
         };
 
-        // 随机大小 (小、中、大)
+        // Random size
         float sizeType = (float)MathUtils::random(0, 3);
         Vector2 size;
         int layer;
 
         if (sizeType < 1.0f) {
             size = { 20, 20 };
-            layer = 1; // 背景层
+            layer = 1; // Background layer
         }
         else if (sizeType < 2.0f) {
             size = { 40, 40 };
-            layer = 2; // 中间层
+            layer = 2; // Middle layer
         }
         else {
             size = { 60, 60 };
-            layer = 3; // 前景层
+            layer = 3; // Foreground layer
         }
 
-        // 随机旋转和旋转方向
+        // Random rotation and rotation direction
         float rotation = (float)MathUtils::random(0, 360);
         float rotationSpeed = MathUtils::random(0.2f, 1.0f);
         if (MathUtils::random(0, 2) < 1.0f) {
-            rotationSpeed = -rotationSpeed; // 随机顺时针或逆时针
+            rotationSpeed = -rotationSpeed; // Random clockwise or counter-clockwise
         }
 
-        // 随机颜色 (灰度)
+        // Random grayscale color
         unsigned char gray = (unsigned char)MathUtils::random(150, 230);
         Color color = { gray, gray, gray, 255 };
 
         asteroid.initialize(position, size, rotation, rotationSpeed, color, layer);
 
-        // 添加到相应的网格单元
+        // Add to corresponding grid cell
         int gridX, gridY;
         worldToGrid(position, gridX, gridY);
 
@@ -91,14 +93,14 @@ std::vector<Asteroid> Grid::getVisibleAsteroids(const Rectangle& frustum) const
 {
     std::vector<Asteroid> result;
 
-    // 计算视锥体覆盖的网格范围
+    // Calculate grid range covered by the frustum
     int startX = std::max(0, static_cast<int>(frustum.x) / m_cellWidth);
     int endX = std::min(m_width - 1, static_cast<int>(frustum.x + frustum.width) / m_cellWidth);
 
     int startY = std::max(0, static_cast<int>(frustum.y) / m_cellHeight);
     int endY = std::min(m_height - 1, static_cast<int>(frustum.y + frustum.height) / m_cellHeight);
 
-    // 遍历可见的网格单元
+    // Iterate through visible grid cells
     for (int y = startY; y <= endY; y++)
     {
         for (int x = startX; x <= endX; x++)
@@ -106,7 +108,7 @@ std::vector<Asteroid> Grid::getVisibleAsteroids(const Rectangle& frustum) const
             int index = y * m_width + x;
             const auto& cell = m_cells[index];
 
-            // 检查每个小行星是否在视锥体内
+            // Check if each asteroid is within the frustum
             for (const auto& asteroid : cell.asteroids)
             {
                 Rectangle asteroidRect = {
@@ -130,34 +132,58 @@ std::vector<Asteroid> Grid::getVisibleAsteroids(const Rectangle& frustum) const
 void Grid::renderDebug(const GameCamera& camera) const
 {
     Rectangle frustum = camera.getFrustum();
+    Rectangle cameraFrame = camera.getCameraFrame();
 
-    // 绘制网格线
+    // Draw grid lines
+    Vector2 cameraPos = camera.getPosition();
+    Vector2 viewportSize = camera.getViewportSize();
+    // Calculate conversion ratio from world coordinates to camera frame coordinates
+    float scaleX = cameraFrame.width / viewportSize.x;
+    float scaleY = cameraFrame.height / viewportSize.y;
     for (int x = 0; x <= m_width; x++)
     {
-        int lineX = x * m_cellWidth;
-        Color color = (lineX >= frustum.x && lineX <= frustum.x + frustum.width) ? GREEN : GRAY;
-        DrawLine(lineX, 0, lineX, m_height * m_cellHeight, color);
+        int worldX = x * m_cellWidth;
+
+        // Convert world coordinates to screen coordinates
+        int screenX1 = (int)(cameraFrame.x + (worldX - cameraPos.x + viewportSize.x / 2) * scaleX);
+        int screenY1 = (int)cameraFrame.y;
+        int screenX2 = screenX1;
+        int screenY2 = (int)(cameraFrame.y + cameraFrame.height);
+
+        // Only draw grid lines within the camera frame
+        if (screenX1 >= cameraFrame.x && screenX1 <= cameraFrame.x + cameraFrame.width)
+        {
+            DrawLine(screenX1, screenY1, screenX2, screenY2, Fade(DARKGRAY, 0.5f));
+        }
     }
 
     for (int y = 0; y <= m_height; y++)
     {
-        int lineY = y * m_cellHeight;
-        Color color = (lineY >= frustum.y && lineY <= frustum.y + frustum.height) ? GREEN : GRAY;
-        DrawLine(0, lineY, m_width * m_cellWidth, lineY, color);
+        int worldY = y * m_cellHeight;
+
+        // Convert world coordinates to screen coordinates
+        int screenX1 = (int)cameraFrame.x;
+        int screenY1 = (int)(cameraFrame.y + (worldY - cameraPos.y + viewportSize.y / 2) * scaleY);
+        int screenX2 = (int)(cameraFrame.x + cameraFrame.width);
+        int screenY2 = screenY1;
+
+        // Only draw grid lines within the camera frame
+        if (screenY1 >= cameraFrame.y && screenY1 <= cameraFrame.y + cameraFrame.height)
+        {
+            DrawLine(screenX1, screenY1, screenX2, screenY2, Fade(DARKGRAY, 0.5f));
+        }
     }
 
-    // 绘制小地图
-    int miniMapSize = 200;
-    int miniMapX = m_width - miniMapSize - 10;
-    int miniMapY = 10;
-
-    // 小地图背景
+    // Draw minimap
+    int miniMapSize = m_screen_width / 10;
+    int miniMapX = m_screen_width - miniMapSize;
+    int miniMapY = 0;
     DrawRectangle(miniMapX, miniMapY, miniMapSize, miniMapSize, Fade(BLACK, 0.5f));
 
-    // 计算缩放比例
+    // Calculate scaling factor
     float scale = static_cast<float>(miniMapSize) / (m_width * m_cellWidth);
 
-    // 绘制网格
+    // Draw grid
     for (int x = 0; x <= m_width; x++)
     {
         int lineX = miniMapX + (int)(x * m_cellWidth * scale);
@@ -170,7 +196,7 @@ void Grid::renderDebug(const GameCamera& camera) const
         DrawLine(miniMapX, lineY, miniMapX + miniMapSize, lineY, DARKGRAY);
     }
 
-    // 绘制视锥体在小地图上
+    // Draw frustum on minimap
     Rectangle miniFrustum = {
         miniMapX + frustum.x * scale,
         miniMapY + frustum.y * scale,

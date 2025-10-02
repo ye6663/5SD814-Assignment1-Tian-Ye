@@ -5,7 +5,7 @@
 
 int main(int argc, char** argv)
 {
-    // 设置窗口大小为1280x720
+    // Set window size
     int width = 1280;
     int height = 720;
     InitWindow(width, height, "Asteroid Field Renderer");
@@ -18,7 +18,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    // 主循环
+    // Main loop
     while (!WindowShouldClose())
     {
         app.update();

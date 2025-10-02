@@ -1,3 +1,5 @@
+// starfield.hpp
+
 #pragma once
 #include "render_command.hpp"
 #include "game_camera.hpp"
@@ -6,7 +8,7 @@
 class Starfield
 {
 public:
-    void initialize(int screenWidth, int screenHeight);
+    void initialize(int worldWidth, int worldHeight);
     void addRenderCommands(std::vector<RenderCommand>& commands, const GameCamera& camera);
     
 private:
@@ -17,7 +19,7 @@ private:
         Vector2 position;
         float size;
         Color color;
-        float parallaxFactor; // 视差因子，用于创建深度感
+        float parallaxFactor;
     };
     
     std::vector<Star> m_stars;
